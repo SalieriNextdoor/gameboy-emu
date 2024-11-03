@@ -10,15 +10,18 @@
 #define GAMEBOY_EMULATOR_H
 #include "clock.h"
 #include "def.h"
-#include "fetcher.h"
+#include "memory.h"
 #include "parser.h"
 #include "processor.h"
 
 class Emulator {
-  byte ROM[0x8000];
-  Fetcher fetcher{ROM};
+  Memory memory;
   parser::Parser parser;
   Processor processor;
+
+  Emulator(const char *filepath);
+
+  void fetch();
 
 public:
   void run();

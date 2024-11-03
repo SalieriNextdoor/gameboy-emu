@@ -21,11 +21,12 @@ struct u16Reg {
     return *this;
   }
 
-  u16Reg &operator++(int) {
+  u16Reg operator++(int) {
+    u16Reg temp{hi, lo};
     lo++;
     if (lo == 0)
       hi++;
-    return *this;
+    return temp;
   }
 };
 
