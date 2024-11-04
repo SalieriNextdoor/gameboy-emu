@@ -30,10 +30,22 @@ void run_op() {
 
 int processor_test() {
   int all_passed = 0;
+  int myPC = 0;
 
-  m.write(pr.PC, 0x03); // INC BC
+  m.write(myPC++, 0x00); // NOP
   run_op();
-  if (pr.BC == 1 && cycle_count == last.tcycles / 4 + 1 && pr.PC == 1)
+  if (cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
+    std::cout << "PASS 0x00 test" << std::endl;
+  else {
+    std::cout << "FAIL 0x00 test" << std::endl;
+    all_passed = 1;
+  }
+  cycle_count = 0;
+
+
+  m.write(myPC++, 0x03); // INC BC
+  run_op();
+  if (pr.BC == 1 && cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
     std::cout << "PASS 0x03 test" << std::endl;
   else {
     std::cout << "FAIL 0x03 test" << std::endl;
@@ -41,20 +53,109 @@ int processor_test() {
   }
   cycle_count = 0;
 
+
   pr.SP.lo = 10;
   pr.SP.hi = 16;
-  m.write(pr.PC, 0x08); // LD (u16),SP
-  m.write(pr.PC + 1, 0xA8);
-  m.write(pr.PC + 2, 0xC0);
+  m.write(myPC++, 0x08); // LD (u16),SP
+  m.write(myPC++, 0xA8);
+  m.write(myPC++, 0xC0);
   run_op();
   if (m.read(0xC0A8) == pr.SP.lo && m.read(0xC0A9) == pr.SP.hi &&
-      cycle_count == last.tcycles / 4 + 1 && pr.PC == 4)
+      cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
     std::cout << "PASS 0x08 test" << std::endl;
   else {
     std::cout << "FAIL 0x08 test" << std::endl;
     all_passed = 1;
   }
   cycle_count = 0;
+
+
+  m.write(myPC++, 0x18); // JR u8
+  m.write(myPC++, 4);
+  myPC += 4;
+  run_op();
+  if (cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
+    std::cout << "PASS 0x18 test1" << std::endl;
+  else {
+    std::cout << "FAIL 0x18 test1" << std::endl;
+    all_passed = 1;
+  }
+  cycle_count = 0;
+  m.write(myPC++, 0x18); // JR u8
+  m.write(myPC++, -6);
+  myPC -= 6;
+  run_op();
+  if (cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
+    std::cout << "PASS 0x18 test2" << std::endl;
+  else {
+    std::cout << "FAIL 0x18 test2" << std::endl;
+    all_passed = 1;
+  }
+  cycle_count = 0;
+  myPC = pr.PC = 0x0101;
+  m.write(myPC++, 0x18); // JR u8
+  m.write(myPC++, -4);
+  myPC -= 4;
+  run_op(); // 0x0103 - 4 
+  if (cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
+    std::cout << "PASS 0x18 test3" << std::endl;
+  else {
+    std::cout << "FAIL 0x18 test3" << std::endl;
+    all_passed = 1;
+  }
+  cycle_count = 0;
+  cycle_count = 0;
+  myPC = pr.PC = 0x00FD;
+  m.write(myPC++, 0x18); // JR u8
+  m.write(myPC++, 1);
+  myPC += 1;
+  run_op(); // 0x00FF + 1
+  if (cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
+    std::cout << "PASS 0x18 test4" << std::endl;
+  else {
+    std::cout << "FAIL 0x18 test4" << std::endl;
+    all_passed = 1;
+  }
+  cycle_count = 0;
+
+  
+  myPC = pr.PC = 0;
+  m.write(myPC++, 0x20); // JR NZ,u8
+  m.write(myPC++, 5);
+  myPC += 5;
+  run_op(); // cond = true
+  // we add 2 because we store the least possible amount of cycles in last.tcycles
+  if (cycle_count == last.tcycles / 4 + 2 && pr.PC == myPC)
+    std::cout << "PASS 0x20 test1" << std::endl;
+  else {
+    std::cout << "FAIL 0x20 test1" << std::endl;
+    all_passed = 1;
+  }
+  cycle_count = 0;
+  m.write(myPC++, 0x28); // JR Z,u8 ()
+  m.write(myPC++, 5);
+  run_op(); // cond = false
+  if (cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
+    std::cout << "PASS 0x20 test2" << std::endl;
+  else {
+    std::cout << "FAIL 0x20 test2" << std::endl;
+    all_passed = 1;
+  }
+  cycle_count = 0;
+
+
+  m.write(myPC++, 0x11); // LD DE,u16
+  m.write(myPC++, 0xA8);
+  m.write(myPC++, 0xC0);
+  run_op(); // DE = 0xC0A8
+  if (pr.DE == 0xC0A8 && cycle_count == last.tcycles / 4 + 1 && pr.PC == myPC)
+    std::cout << "PASS 0x11 test" << std::endl;
+  else {
+    std::cout << "FAIL 0x11 test" << std::endl;
+    all_passed = 1;
+  }
+  cycle_count = 0;
+
 
   return all_passed;
 }

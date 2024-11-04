@@ -23,6 +23,8 @@ class Processor {
   // u16Reg* tablerp2[4] = {&BC, &DE, &HL, &AF};
 #endif
 
+bool check_condition(parser::tablecc cond);
+
 public:
 #ifdef GAMEBOY_TEST_DEBUG
   u16Reg AF, BC, DE, HL, SP;
